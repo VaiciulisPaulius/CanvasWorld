@@ -19,25 +19,19 @@ export default function Drawer(props) {
     const colorValue = useContext(ColorValue);
     
     const zoom = props.zoom
-    const pos = props.pos
-    const offset = props.canvasOffset
-    const pixelPos = props.pixelPos
+    const offset = props.currentCanvasOffsetScreen
+    const coordinates = props.coordinates
     const toDraw = props.toDraw
     const highlightDisplay = props.highlightDisplay
-
-    useEffect(() => {
-
-    }, [pixelPos])
 
     function sendDraw(x, y, colorValue) {
         const offset = x + (1000 * y)
         Axios.put("http://localhost:3001/api/canvas/draw/put", {offset: offset, value: colorValue})
     }
     useEffect(() => {
-        sendDraw(pixelPos.x, pixelPos.y, colorValue.value)
+        sendDraw(coordinates.x, coordinates.y, colorValue.value)
     }, [toDraw])
-    
     return (
-        <div style={ { display: highlightDisplay, backgroundColor: zoom > 5 ? 'rgb(0, 0, 0, 0)' : 'red' , width: zoom, height: zoom, transform: `scale(${zoom}, ${zoom}) !important`, position: 'absolute', left: (pixelPos.x * zoom) + offset.x - 1, top: (pixelPos.y * zoom) + offset.y - 1} } className={s.hightlight}></div>
+        <div style={ { display: highlightDisplay, backgroundColor: zoom > 5 ? 'rgb(0, 0, 0, 0)' : 'red' , width: zoom, height: zoom, transform: `scale(${zoom}, ${zoom}) !important`, position: 'absolute', left: (coordinates.x * zoom) + offset.x - 1, top: (coordinates.y * zoom) + offset.y - 1} } className={s.hightlight}></div>
     )
 }

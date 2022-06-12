@@ -1,4 +1,4 @@
-import Canvas from "./components/Canvas";
+import CanvasManipulator from "./components/CanvasManipulator";
 import ColorPicker from "./components/ColorPicker";
 import {createUseStyles} from 'react-jss'
 import { useState, createContext, useEffect } from 'react'
@@ -41,7 +41,7 @@ function App() {
       <div className={s.canvasContainer}>
         <ColorPallete.Provider value={colorPal}>
           <ColorValue.Provider value={selectedColor}>
-            <Canvas/>
+            <CanvasManipulator/>
           </ColorValue.Provider>
           <div className={s.colorPickerContainer}>
             <ColorPicker changeSelectedColor={changeSelectedColor} />
