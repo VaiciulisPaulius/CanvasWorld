@@ -47,14 +47,15 @@ export default function CanvasManipulator() {
     const [highlightDisplay, setHighlightDisplay] = useState('none')
 
     const [toDraw, setToDraw] = useState(false)
-    useEffect(() => {
-        console.log("fadfsdfasd" + highlightDisplay)
-    }, [highlightDisplay])
 
+    function getMouseOffset(e, scale) {
+        if(initialMouseClickPos.current == null) return;
+        return { x: (e.pageX - initialMouseClickPos.current.x) / scale, y: (e.pageY - initialMouseClickPos.current.y) / scale}
+    }
     function zoomCanvas(e) {
         let direction = e.deltaY;
-
         let zoomCopy = zoom;
+
         if(zoom < 1) zoomCopy = 1
         zoomCopy = direction === -100 ? zoomCopy * 1.2 : zoomCopy * 0.8
         
@@ -67,16 +68,19 @@ export default function CanvasManipulator() {
         const isCanvasWithinBrowserScreen = (result.x > -800 && result.x < 1600) && (result.y < 800 && result.y > -900)
         if(isCanvasWithinBrowserScreen) setPan(result)
     }
+
+    // This function handles mouse events in canvas, depending on type, 
+    // the function will either transform (pan or zoom) the canvas with css or make a draw attempt.
     function handleInput(e) {
         const type = e.type //Type of mouse event
 
-        if(type === "mousedown") { //Init params for camera movement, drawing logic.
+        if(type === "mousedown") { //Init params for canvas movement logic.
             isMouseHolding.current = true
 
             initialMouseClickPos.current = {x: e.pageX, y: e.pageY}
             currentCanvasOffset.current = pan
         }
-        else if(isMouseHolding.current === true && type === "mousemove") { //During mouse drag.
+        else if(isMouseHolding.current === true && type === "mousemove") { //During mouse drag in canvas.
             const offsetRaw = getMouseOffset(e, 1)
             const distanceToInitial = Math.sqrt(Math.pow(offsetRaw.x, 2) + Math.pow(offsetRaw.y, 2))
 
@@ -88,18 +92,13 @@ export default function CanvasManipulator() {
             const distanceToInitial = Math.sqrt(Math.pow(offsetRaw.x, 2) + Math.pow(offsetRaw.y, 2))
 
             if(distanceToInitial < 5) setToDraw(e)
-            //if(distanceToInitial < 5) drawPixel(e) //If camera not moved enough, register as a pixel draw.
+            //if(distanceToInitial < 5) drawPixel(e) //If canvas not moved enough, register as a mouse click; do a pixel draw.
             isMouseHolding.current = false
             // setInitialPos(null)
             // setInitialCanvasPos(null)
 
         }
     }
-    function getMouseOffset(e, scale) { //scale === zoom, just an optional thing
-        if(initialMouseClickPos.current == null) return;
-        return { x: (e.pageX - initialMouseClickPos.current.x) / scale, y: (e.pageY - initialMouseClickPos.current.y) / scale}
-    }
-
     return (
         <div onWheel={e => zoomCanvas(e)} className={s.inputField} onMouseDown={e => handleInput(e)} onMouseMove={e => handleInput(e)} onMouseUp={e => handleInput(e)}>
             <Drawer toDraw={toDraw} highlightDisplay={highlightDisplay} coordinates={coordinates} currentCanvasOffsetScreen={currentCanvasOffsetScreen} zoom={zoom}/>
