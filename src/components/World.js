@@ -33,7 +33,7 @@ export default function World() {
     // For zooming the canvas
     const [zoom, setZoom] = useState(1.5)
 
-    // For canvas navigation. pan value is stored during canvas navigation movement, value is reseted with new movement.
+    // For canvas navigation. pan value is stored during canvas navigation movement, value is reseted with new movement..
     const [pan, setPan] = useState({x: 0, y: 0})
 
     // Stores the initial coordinates (in event.page data) of where a mouse clicked in the canvas. Used for handling canvas movement logic.
