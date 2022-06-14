@@ -1,11 +1,10 @@
-import CanvasManipulator from "./components/CanvasManipulator";
+import World from "./components/World";
 import ColorPicker from "./components/ColorPicker";
 import {createUseStyles} from 'react-jss'
-import { useState, createContext, useEffect } from 'react'
+import { useState, createContext, useEffect, useRef } from 'react'
 import colorPalleteFile from './duel.hex'
-import jsonColor from './colors.json'
 
-export const ColorValue = createContext({value: 0, hex: '000000'})
+export const SelectedColor = createContext({value: 0, hex: '000000'})
 export const ColorPallete = createContext([])
 
 const useStyles = createUseStyles({ //
@@ -15,34 +14,41 @@ const useStyles = createUseStyles({ //
   },
   'colorPickerContainer': {
     position: 'fixed',
-    bottom: 10,
+    bottom: 5,
     left: 0
   }
 })
 
 function App() {
   const s = useStyles()
+
+  // Currently selected color.
+  // Value: 0-255, both inclusive.
+  // Hex color thats mapped to one of the 0-255 values.
   const [selectedColor, setSelectedColor] = useState({value: 0, hex: '000000'})
+
+  // Color pallete stored as an array of hex (without the #)
   const [colorPal, setColorPal] = useState([])
 
-  function changeSelectedColor(val) { setSelectedColor(val); console.log(selectedColor) }
+  function changeSelectedColor(val) { setSelectedColor(val) }
 
+  // Fetch the color palette file and store.
   useEffect(() => {
     fetch(colorPalleteFile)
     .then(val => val.text())
     .then(text => {
         const pal = text.split(/\r?\n/)
         setColorPal(pal)
-    })
-    
-}, [])
+    })  
+  }, [])
+
   return (
     <>
       <div className={s.canvasContainer}>
         <ColorPallete.Provider value={colorPal}>
-          <ColorValue.Provider value={selectedColor}>
-            <CanvasManipulator/>
-          </ColorValue.Provider>
+          <SelectedColor.Provider value={selectedColor}>
+            <World/>
+          </SelectedColor.Provider>
           <div className={s.colorPickerContainer}>
             <ColorPicker changeSelectedColor={changeSelectedColor} />
           </div>

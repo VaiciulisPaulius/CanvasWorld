@@ -3,6 +3,7 @@ import { useRef, useState, useEffect } from 'react'
 import {createUseStyles} from 'react-jss'
 import Drawer from './Drawer'
 import Canvas from './Canvas'
+import CoordsDisplay from './CoordsDisplay'
 
 const useStyles = createUseStyles({
     'zoom': {
@@ -11,14 +12,21 @@ const useStyles = createUseStyles({
     },
     'inputField': {
         width: '100vw',
-        height: '100vh'
+        height: '100vh',
+        zIndex: 1
     },
     'canvasWrapper': {
         display: 'inline-block'
+    },
+    'header': {
+        display: 'flex',
+        justifyContent: 'end',
+        zIndex: 1,
+        margin: '10px 10px'
     }
 })
 
-export default function CanvasManipulator() {
+export default function World() {
     // CSS styles
     const s = useStyles()
 
@@ -40,7 +48,7 @@ export default function CanvasManipulator() {
     // The current canvas element offset coordinates relative to page top left most corner.
     const [currentCanvasOffsetScreen, setCurrentCanvasOffsetScreen] = useState({x: 0, y: 0})
 
-    // The current pixel highlighter coordinates in Canvas coords (x: 1, x: 2, etc..)
+    // The current pixel coordinates in Canvas coords (x: 10, y: 201) where the mouse position is.
     let [coordinates, setCoordinates] = useState({x: 0, y: 0})
 
     // For turning off/on pixel highlighter whenever mouse exits/enters canvas area
@@ -48,10 +56,6 @@ export default function CanvasManipulator() {
 
     const [toDraw, setToDraw] = useState(false)
 
-    function getMouseOffset(e, scale) {
-        if(initialMouseClickPos.current == null) return;
-        return { x: (e.pageX - initialMouseClickPos.current.x) / scale, y: (e.pageY - initialMouseClickPos.current.y) / scale}
-    }
     function zoomCanvas(e) {
         let direction = e.deltaY;
         let zoomCopy = zoom;
@@ -73,43 +77,76 @@ export default function CanvasManipulator() {
     // the function will either transform (pan or zoom) the canvas with css or make a draw attempt.
     function handleInput(e) {
         const type = e.type //Type of mouse event
+        console.log(e)
 
-        if(type === "mousedown") { //Init params for canvas movement logic.
+        if(type === "mousedown" || type === "touchstart") { //Init params for canvas movement logic.
             isMouseHolding.current = true
 
             initialMouseClickPos.current = {x: e.pageX, y: e.pageY}
             currentCanvasOffset.current = pan
         }
-        else if(isMouseHolding.current === true && type === "mousemove") { //During mouse drag in canvas.
-            const offsetRaw = getMouseOffset(e, 1)
-            const distanceToInitial = Math.sqrt(Math.pow(offsetRaw.x, 2) + Math.pow(offsetRaw.y, 2))
-
-            const offset = getMouseOffset(e, zoom)
-            if(distanceToInitial >= 5) panCanvas(e)
+        else if(isMouseHolding.current === true && (type === "mousemove" || type === "touchmove")) { //During mouse drag in canvas. 
+            evaluateMouseActionAndExecute(e, type)
         }
-        else if(type === "mouseup") {
-            const offsetRaw = getMouseOffset(e, 1)
-            const distanceToInitial = Math.sqrt(Math.pow(offsetRaw.x, 2) + Math.pow(offsetRaw.y, 2))
-
-            if(distanceToInitial < 5) setToDraw(e)
-            //if(distanceToInitial < 5) drawPixel(e) //If canvas not moved enough, register as a mouse click; do a pixel draw.
+        else if(type === "mouseup" || type === "touchend") {
+            evaluateMouseActionAndExecute(e, type)
             isMouseHolding.current = false
+
+            //if(distanceToInitial < 5) drawPixel(e) 
             // setInitialPos(null)
             // setInitialCanvasPos(null)
 
         }
+
+        function evaluateMouseActionAndExecute(e, mouseEventType) {
+            const offsetRaw = getMouseOffset(e, 1)
+            console.log(offsetRaw)
+            const currentDistToInitMousePos = Math.sqrt(Math.pow(offsetRaw.x, 2) + Math.pow(offsetRaw.y, 2)) //
+
+            if(currentDistToInitMousePos >= 10) panCanvas(e) //If mouse moved enough, register as a mouse move; perform canvas movement.
+            else if(currentDistToInitMousePos < 10 && mouseEventType == "mouseup") setToDraw(e) //If mouse not moved enough, register as a mouse click; do a pixel draw.
+        }
+    }
+    function getMouseOffset(e, scale) {
+        if(initialMouseClickPos.current == null) {
+            console.log("i agree")
+            return;
+        }
+        return { x: (e.pageX - initialMouseClickPos.current.x) / scale, y: (e.pageY - initialMouseClickPos.current.y) / scale}
     }
     return (
-        <div onWheel={e => zoomCanvas(e)} className={s.inputField} onMouseDown={e => handleInput(e)} onMouseMove={e => handleInput(e)} onMouseUp={e => handleInput(e)}>
-            <Drawer toDraw={toDraw} highlightDisplay={highlightDisplay} coordinates={coordinates} currentCanvasOffsetScreen={currentCanvasOffsetScreen} zoom={zoom}/>
-            <div style={ { transform: `scale(${zoom}, ${zoom})` } } className={s.zoom}>
-                <div style={ { transform: `translate(${pan.x}px, ${pan.y}px)`} } className={s.pan}>
-                    <div onMouseEnter={e => setHighlightDisplay('block')} onMouseLeave={e => setHighlightDisplay('none')} className={s.canvasWrapper}>
-                        <Canvas toDraw={toDraw} coordinates={coordinates} zoom={zoom} setCurrentCanvasOffsetScreen={setCurrentCanvasOffsetScreen} setCoordinates={setCoordinates} className={s.canvas}/>
+        <>
+        <header className={s.header}>
+            <CoordsDisplay coordinates={coordinates}/>
+        </header>
+        <div onWheel={e => zoomCanvas(e)}
+        className={s.inputField}
+        onMouseDown={e => handleInput(e)}
+        onMouseMove={e => handleInput(e)}
+        onMouseUp={e => handleInput(e)}>
+            <Drawer toDraw={toDraw}
+            highlightDisplay={highlightDisplay}
+            coordinates={coordinates}
+            currentCanvasOffsetScreen={currentCanvasOffsetScreen}
+            zoom={zoom}/>
+            <div style={ { transform: `scale(${zoom}, ${zoom})` } }
+            className={s.zoom}>
+                <div style={ { transform: `translate(${pan.x}px, ${pan.y}px)`} }
+                className={s.pan}>
+                    <div onMouseEnter={e => setHighlightDisplay('block')}
+                    onMouseLeave={e => setHighlightDisplay('none')}
+                    className={s.canvasWrapper}>
+                        <Canvas toDraw={toDraw}
+                        coordinates={coordinates}
+                        zoom={zoom}
+                        setCurrentCanvasOffsetScreen={setCurrentCanvasOffsetScreen}
+                        setCoordinates={setCoordinates}
+                        className={s.canvas}/>
                     </div>
                     {/* onMouseDown={e => drawPixel(e)} */}
                 </div>
             </div>
         </div>
+        </>
     )
 }

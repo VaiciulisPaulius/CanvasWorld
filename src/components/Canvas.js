@@ -2,14 +2,15 @@ import React from 'react'
 import { useRef, useEffect, useState, useContext } from 'react'
 import {createUseStyles} from 'react-jss'
 import Axios from 'axios'
-import { ColorValue } from '../App'
+import { SelectedColor, ColorPallete } from '../App'
 import colorPalleteJsonFile from '../colors.json';
 
 const useStyles = createUseStyles({
     'canvas': {
         margin: 'auto',
         imageRendering: 'pixelated',
-        display: 'table-row'
+        display: 'table-row',
+        zIndex: 10
     },
     'canvasBorder': {
         border: '1px solid gray',
@@ -19,13 +20,16 @@ const useStyles = createUseStyles({
 
 export default function Canvas(props) {
     const s = useStyles()
+
+    // A html canvas reference
     const canvasRef = useRef(null)
-    const [canvasPixelPositions, setCanvasPixelPositions] = useState({x: 0, y: 0})
-    const selectedColor = useContext(ColorValue);
-    const [toDraw, setToDraw] = useState(false) //When this value changes, the Drawer component picks it up and sends draw attempt to API
-    const [imageData, setImageData] = useState([])
-    const [colorPallete, setColorPallete] = useState([])
+
+    const selectedColor = useContext(SelectedColor);
+
+
+    const [colorPalleteArr, setColorPallete] = useState([])
     const isCanvasMoving = useRef(false)
+    const colorPallete = useContext(ColorPallete)
 
     useEffect(() => {
         const canvas = canvasRef.current
@@ -47,24 +51,44 @@ export default function Canvas(props) {
         socket.addEventListener('message', e => {
             let res = JSON.parse(e.data)
             console.log(res);
-            if(res.offset !== 0 || res.value !== 0) updateTile(res.offset, res.value)
+            if(res.offset !== 0 || res.value !== 0) {
+                //updateTile(res.offset, res.value)
+
+                let y = Math.floor(res.offset / 1000)
+                let x = res.offset - (y * 1000)
+                const colorValue = '#' + colorPallete[res.value]
+
+                drawPixel(x, y, colorValue)
+            }
         });
     }
-    function updateTile(offset, value) {
-        let imageDataCopy = new Uint8ClampedArray(imageData.buffer) 
-        let imageData32 = new Uint32Array(imageDataCopy.buffer)
+    // function updateTileInImageData(offset, value) {
+    //     let imageDataCopy = new Uint8ClampedArray(imageData.buffer) 
+    //     let imageData32 = new Uint32Array(imageDataCopy.buffer)
 
-        imageData32[offset] = colorPallete[value]
-        console.log(imageData)
-        console.log(colorPallete)
+    //     imageData32[offset] = colorPallete[value]
+    //     console.log(imageDataCopy)
+    //     console.log(colorPallete)
+
+    //     const canvas = canvasRef.current
+    //     const ctx = canvas.getContext('2d')
+
+    //     let resultImage = new ImageData(imageDataCopy, 1000, 1000)
+    //     ctx.putImageData(resultImage, 0, 0)
+    //     setImageData(imageDataCopy)
+    // }
+    function updateTile(offset, value) {
+        let y = Math.floor(offset / 1000)
+        let x = offset - (y * 1000)
 
         const canvas = canvasRef.current
         const ctx = canvas.getContext('2d')
 
-        let resultImage = new ImageData(imageDataCopy, 1000, 1000)
-        ctx.putImageData(resultImage, 0, 0)
-        setImageData(imageDataCopy)
+        ctx.fillStyle = '#' + colorPallete[value]
+        console.log(colorPallete[value])
+        ctx.fillRect(x, y, 1, 1)
     }
+    // A function for generating a color pallete with a 
     function getColorPalleteABGR() {
         var dataView = new DataView(new ArrayBuffer(4));
 
@@ -81,40 +105,45 @@ export default function Canvas(props) {
     useEffect(() => getColorPalleteABGR(), [])
 
     useEffect(() => {
+        if(colorPalleteArr.length === 0) return
         Axios.get("http://localhost:3001/api/canvas/get")
         .then(res => {
+
             const canvas = canvasRef.current
             const ctx = canvas.getContext('2d')
+            console.log(res)
 
             let Uint8CanvasArray = getUint8ClampedArray(res.data)
             let resultImage = new ImageData(Uint8CanvasArray, 1000, 1000)
             ctx.putImageData(resultImage, 0, 0)
-            setImageData(Uint8CanvasArray)
+            //setImageData(Uint8CanvasArray)
         })
         .then(() => {
             //console.log(performance.now() - start)
         })
-    }, [colorPallete])
+    }, [colorPalleteArr])
 
     function getUint8ClampedArray(arr) {
-        let imageDataArr = new Uint8ClampedArray((arr.length - 1) * 4)
+        let imageDataArr = new Uint8ClampedArray(arr.length * 4)
         let imageDataArr32Int = new Uint32Array(imageDataArr.buffer)
 
         for(let i = 0; i < arr.length; i++) {
-            imageDataArr32Int[i] = colorPallete[arr[i].value]
+            imageDataArr32Int[i] = colorPalleteArr[arr[i].value]
         }
 
         return imageDataArr
     }
     useEffect(() => {
-        drawPixel(props.toDraw)
+        const colorValue = '#' + selectedColor.hex
+        drawPixel(props.coordinates.x, props.coordinates.y, colorValue)
     }, [props.toDraw])
-    function drawPixel(e) {
+
+    function drawPixel(x, y, colorValue) {
         const canvas = canvasRef.current
         const ctx = canvas.getContext('2d')
-        ctx.fillStyle = '#' + selectedColor.hex
-        //ctx.fillStyle = 'red'
-        ctx.fillRect(props.coordinates.x, props.coordinates.y, 1, 1)
+
+        ctx.fillStyle = colorValue
+        ctx.fillRect(x, y, 1, 1)
 
         //sendDraw(canvasPixelPositions.x, canvasPixelPositions.y, 50)
         //setToDraw(!toDraw)
@@ -127,9 +156,15 @@ export default function Canvas(props) {
     }
     function updateCoordinates(e) {
         const ctxOffset = getPosition(canvasRef.current)
-        if(isCanvasMoving.current) props.setCurrentCanvasOffsetScreen(ctxOffset)
+        props.setCurrentCanvasOffsetScreen(ctxOffset)
         const canvasPos = {x: (e.pageX - ctxOffset.x), y: (e.pageY - ctxOffset.y)}
         const newCanvasPixelPositions = {x: Math.floor(canvasPos.x / props.zoom), y: Math.floor(canvasPos.y / props.zoom)}
+
+        if(newCanvasPixelPositions.x < 0) newCanvasPixelPositions = {x: 0, y: newCanvasPixelPositions.y}
+        else if(newCanvasPixelPositions.x >= 1000000) newCanvasPixelPositions = {x: 999999, y: newCanvasPixelPositions.y}
+        else if(newCanvasPixelPositions.y < 0) newCanvasPixelPositions = {x: newCanvasPixelPositions.x, y: 0}
+        else if(newCanvasPixelPositions.y >= 1000000) newCanvasPixelPositions = {x: newCanvasPixelPositions.x, y: 999999}
+
         if(newCanvasPixelPositions.x !== props.coordinates.x || newCanvasPixelPositions.y !== props.coordinates.y) {
             props.setCoordinates(newCanvasPixelPositions)
         }
