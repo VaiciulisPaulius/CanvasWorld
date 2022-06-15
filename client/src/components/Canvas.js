@@ -58,7 +58,7 @@ export default function Canvas(props) {
             if(res.offset !== 0 || res.value !== 0) {
                 let y = Math.floor(res.offset / 1000)
                 let x = res.offset - (y * 1000)
-                const colorValue = '#' + colorPalleteRef.current[res.value]
+                const colorValue = '#' + colorPalleteRef.current[res.value] //a
                 drawPixel(x, y, colorValue)
             }
         });
