@@ -14,7 +14,7 @@ const useStyles = createUseStyles({
     },
     'canvasBorder': {
         border: '1px solid gray',
-        display: 'table' // Used for sizing the parent exactly to the height and width of its child (canvas).
+        display: 'table' // Used for sizing the parent exactly to the height and width of its child (canvas)
     }
 })
 
@@ -58,7 +58,7 @@ export default function Canvas(props) {
             if(res.offset !== 0 || res.value !== 0) {
                 let y = Math.floor(res.offset / 1000)
                 let x = res.offset - (y * 1000)
-                const colorValue = '#' + selCol.current[res.value]
+                const colorValue = '#' + colorPalleteRef.current[res.value]
                 drawPixel(x, y, colorValue)
             }
         });
