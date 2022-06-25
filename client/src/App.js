@@ -2,7 +2,7 @@ import World from "./components/World";
 import ColorPicker from "./components/ColorPicker";
 import {createUseStyles} from 'react-jss'
 import { useState, createContext, useEffect, useRef } from 'react'
-import colorPalleteFile from './duel.hex'
+import colorPalleteFile from './assets/colorPalette/duel.hex'
 
 export const SelectedColor = createContext({value: 0, hex: '000000'})
 export const ColorPallete = createContext([])
@@ -39,10 +39,8 @@ function App() {
     .then(text => {
         const pal = text.split(/\r?\n/)
         setColorPal(pal)
-        console.log(pal)
     })  
   }, [])
-  useEffect(() => console.log(colorPal), [colorPal])
 
   return (
     <>

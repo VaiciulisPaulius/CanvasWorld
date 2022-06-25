@@ -17,6 +17,7 @@ const wss = new WebSocket.Server({ server: server })
 let config = require('./config');
 
 const db = mysql.createPool({
+    connectionLimit: 2,
     host: config.development.database.host,
     user: config.development.database.user,
     password: config.development.database.password,
@@ -42,13 +43,15 @@ wss.broadcast = (offset, value) => {
 app.get("/api/canvas/get", (req, res) => {
     const sqlSelect = `SELECT value AS v FROM canvas`;
     db.query(sqlSelect, (err, result) => {
-        let arr = []
-        result.forEach(val => {
-            arr.push(val.v)
-        })
-
-        console.log(arr)
-        res.send(arr)
+        if(result != undefined && result.length !== 0) {
+            let arr = []
+            result.forEach(val => {
+                arr.push(val.v)
+            })
+    
+            console.log(arr)
+            res.send(arr)
+        }
     })
 })
 app.put("/api/canvas/draw/put",  (req, res) => {
@@ -56,7 +59,7 @@ app.put("/api/canvas/draw/put",  (req, res) => {
     const value = req.body.value
 
     console.log(offset, value)
-    if(value >= 0 && value <= 255 && offset >= 0 && offset < 999999) {
+    if(value >= 0 && value <= 255 && offset >= 0 && offset < 184899) {
         const sqlUpdate = "UPDATE canvas SET value = ? WHERE offset = ?;"
 
         db.query(sqlUpdate, [value, offset], (err, result) => {
@@ -69,10 +72,15 @@ app.put("/api/canvas/draw/put",  (req, res) => {
         }
     else res.send("Invalid Input.")
 })
+// app.use(function (request, response) {
+//     response.header("Access-Control-Allow-Origin", "*");
+//     response.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+// });
 
+const PORT = process.env.PORT || 3001;
 
-server.listen(config.development.server.port, () => {
-    console.log("running on port " + config.development.server.port)
+server.listen(PORT, () => {
+    console.log("running on port " + PORT)
 })
 
 
@@ -97,11 +105,11 @@ server.listen(config.development.server.port, () => {
 // app.get("/", (req, res) => {
 //     let sqlStatement = "INSERT INTO canvas (offset, value) VALUES "
 
-//     for(let y = 0; y < 1000; y++) {
-//         for(let x = 0; x < 1000; x++) {
-//             let offset = x + (y * 1000)
-//             let value = offset % 2 === 0 ? 0 : 255
-
+//     for(let y = 0; y < 430; y++) {
+//         for(let x = 0; x < 430; x++) {
+//             let offset = x + (y * 430)
+//             //let value = offset % 2 === 0 ? 0 : 255
+//             let value = 7
 //             sqlStatement += `('${offset}', '${value}'), `
 //         }
 //     }

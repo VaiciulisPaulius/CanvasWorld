@@ -33,8 +33,7 @@ export default function World() {
     // For zooming the canvas
     const [zoom, setZoom] = useState(1.5)
 
-    // For canvas navigation. pan value is stored during canvas navigation movement, value is reseted with new movement..
-    const [pan, setPan] = useState({x: 0, y: 0})
+    const [pan, setPan] = useState({x: 750, y: 200})
 
     // The current canvas element offset coordinates relative to page top left most corner.
     const [currentCanvasOffsetScreen, setCurrentCanvasOffsetScreen] = useState({x: 0, y: 0})
@@ -56,13 +55,16 @@ export default function World() {
     // True when a mouse has clicked in the canvas and hasnt let go, false when a mouse release event occurs afterwards.
     const isMouseHolding = useRef(false)
 
+    const MAX_SCALE = 200
+    const MIN_SCALE = 1
+
     function zoomCanvas(e) {
         let direction = e.deltaY;
         let zoomCopy = zoom;
 
-        if(zoom < 1) zoomCopy = 1
-        else if(zoom > 200) zoomCopy = 200
-        zoomCopy = direction === -100 ? zoomCopy * 1.2 : zoomCopy * 0.8
+        if(zoom < 1) zoomCopy = MIN_SCALE
+        else if(zoom > 200) zoomCopy = MAX_SCALE
+        zoomCopy = direction < 0 ? zoomCopy * 1.2 : zoomCopy * 0.8
         
         setZoom(zoomCopy)
     }
@@ -95,7 +97,6 @@ export default function World() {
 
         function evaluateMouseActionAndExecute(e, mouseEventType) {
             const offsetRaw = getMouseOffset(e, 1)
-            console.log(offsetRaw)
             const currentDistToInitMousePos = Math.sqrt(Math.pow(offsetRaw.x, 2) + Math.pow(offsetRaw.y, 2)) //
 
             if(currentDistToInitMousePos >= 10) panCanvas(e) //If mouse moved enough, register as a mouse move; perform canvas movement.
@@ -104,8 +105,7 @@ export default function World() {
     }
     function getMouseOffset(e, scale) {
         if(initialMouseClickPos.current == null) {
-            console.log("i agree")
-            return;
+            return
         }
         return { x: (e.pageX - initialMouseClickPos.current.x) / scale, y: (e.pageY - initialMouseClickPos.current.y) / scale}
     }
@@ -136,6 +136,7 @@ export default function World() {
                         zoom={zoom}
                         setCurrentCanvasOffsetScreen={setCurrentCanvasOffsetScreen}
                         setCoordinates={setCoordinates}
+                        isMouseHolding={isMouseHolding.current}
                         className={s.canvas}/>
                     </div>
                 </div>

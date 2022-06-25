@@ -32,9 +32,6 @@ export default function ColorPicker(props) {
     const [selectedColorId, setSelectedColorId] = useState('color-0')
 
     function selectColor(e) {
-        console.log(e)
-        console.log(e.target.attributes[0].nodeValue)
-
         // Get the current highlighted color and set to default styling.
         let prevHighLightColorRef = document.getElementById(`${selectedColorId}`)
         prevHighLightColorRef.style.border = "solid white 1px"

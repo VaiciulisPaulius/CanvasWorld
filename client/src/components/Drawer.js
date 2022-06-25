@@ -28,14 +28,11 @@ export default function Drawer(props) {
         if(colorValue < 0 || colorValue > 255) return
         if(x < 0 || x > 1000000 || y < 0 || y > 1000000) return
 
-        const offset = x + (1000 * y)
-        console.log(offset, colorValue)
-
-        Axios.put("http://localhost:3001/api/canvas/draw/put", {offset: offset, value: colorValue})
+        const offset = x + (430 * y)
+        Axios.put("https://fathomless-river-43523.herokuapp.com/api/canvas/draw/put", {offset: offset, value: colorValue})
     }
     useEffect(() => {
         sendDraw(coordinates.x, coordinates.y, colorValue.value)
-        console.log(colorValue.value)
     }, [toDraw])
     return (
         <div style={ { display: highlightDisplay, backgroundColor: zoom > 5 ? 'rgb(0, 0, 0, 0)' : 'red' , width: zoom, height: zoom, transform: `scale(${zoom}, ${zoom}) !important`, position: 'absolute', left: (coordinates.x * zoom) + offset.x - 1, top: (coordinates.y * zoom) + offset.y - 1} } className={s.hightlight}></div>
