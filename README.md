@@ -9,6 +9,7 @@ The canvas size is 430x430 in pixels, users have 256 different color combination
 ### Client Dependencies
 
 Axios
+JSS
 
 ### Node.js server Dependencies
 
@@ -24,6 +25,7 @@ ws
 cd client
 
 npm install axios
+yarn add react-jss
 
 ### Server-side
 cd server
